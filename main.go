@@ -748,6 +748,25 @@ func configureAsHTTPServer() {
 		})
 	}
 
+	basePath := viper.GetString("http_settings.base_path")
+
+	if basePath != "/" {
+		if !strings.HasSuffix(basePath, "/") {
+			basePath = basePath + "/"
+		}
+		e.Pre(middleware.RewriteWithConfig(middleware.RewriteConfig{
+			Skipper: func(c echo.Context) bool {
+				if strings.HasPrefix(c.Request().URL.Path, basePath) {
+					return false
+				}
+				return true
+			},
+			Rules: map[string]string{
+				basePath + "*": "/$1",
+			},
+		}))
+	}
+
 	/* static */
 	rootPath := viper.GetString("http_settings.root")
 	if rootPath == "" {
@@ -781,8 +800,8 @@ func configureAsHTTPServer() {
 		e.Pre(middleware.RewriteWithConfig(middleware.RewriteConfig{
 			Skipper: func(c echo.Context) bool {
 
-				if strings.HasSuffix(c.Request().RequestURI, ".js") {
-					if heputils.FileExists(rootPath + c.Request().RequestURI + ".gz") {
+				if strings.HasSuffix(c.Request().URL.Path, ".js") {
+					if heputils.FileExists(rootPath + c.Request().URL.Path + ".gz") {
 						c.Response().Header().Set(echo.HeaderContentEncoding, "gzip")
 						c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJavaScript)
 						return false
@@ -792,7 +811,7 @@ func configureAsHTTPServer() {
 				return true
 			},
 			Rules: map[string]string{
-				"*.js": "$1.js.gz",
+				basePath + "*.js": "/$1.js.gz",
 			},
 		}))
 	}
