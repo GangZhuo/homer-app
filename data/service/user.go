@@ -225,6 +225,7 @@ func (us *UserService) LoginUser(username, password string) (string, model.Table
 		userData.FirstName = username
 		userData.IsAdmin = isAdmin
 		userData.ExternalAuth = true
+		userData.Enabled = true
 		if val, ok := user["dn"]; ok {
 			userData.UserGroup = val
 		}
