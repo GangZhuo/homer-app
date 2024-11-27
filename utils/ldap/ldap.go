@@ -168,7 +168,7 @@ func (lc *LDAPClient) Authenticate(username, password string) (bool, bool, map[s
 		}
 
 		attributes := append(lc.Attributes, "dn")
-		userFilter := fmt.Sprintf(lc.UserFilter, username)
+		userFilter := fmt.Sprintf(lc.UserFilter, ldap.EscapeFilter(username))
 		// Search for the given username
 		searchRequest := ldap.NewSearchRequest(
 			lc.Base,
@@ -230,7 +230,7 @@ func (lc *LDAPClient) Authenticate(username, password string) (bool, bool, map[s
 		logger.Debug("Sending anonymous request...")
 
 		if lc.UserDN != "" && username != "" && password != "" {
-			userDN := fmt.Sprintf(lc.UserDN, username)
+			userDN := fmt.Sprintf(lc.UserDN, ldap.EscapeFilter(username))
 			err = lc.Conn.Bind(userDN, password)
 			if err != nil {
 				logger.Error("error ldap request...", err)
@@ -282,7 +282,7 @@ func (lc *LDAPClient) GetGroupsOfUser(username string) ([]string, error) {
 	searchRequest := ldap.NewSearchRequest(
 		lc.Base,
 		lc.ScopeValue, lc.DerefValue, lc.GroupLimit, lc.TimeLimit, false,
-		fmt.Sprintf(lc.GroupFilter, parsedUsername),
+		fmt.Sprintf(lc.GroupFilter, ldap.EscapeFilter(parsedUsername)),
 		lc.GroupAttribute,
 		nil,
 	)
