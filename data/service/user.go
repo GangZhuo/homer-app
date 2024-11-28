@@ -235,7 +235,7 @@ func (us *UserService) LoginUser(username, password string) (string, model.Table
 		userid := username
 
 		// Microsoft AD implementations require DN for 1.2.840.113556.1.4.1941 recursive group query
-		if us.LdapClient.UseDNForGroupSearch {
+		if us.LdapClient.UseDNForGroupSearch || us.LdapClient.OUAsGroup {
 			userid = user["dn"]
 		}
 

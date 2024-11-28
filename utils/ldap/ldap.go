@@ -56,6 +56,7 @@ type LDAPClient struct {
 	Conn                *ldap.Conn
 	Port                int    `default:"389"`
 	InsecureSkipVerify  bool   `default:"true"`
+	OUAsGroup           bool   `default:"false"`
 	ShortGroup          bool   `default:"false"`
 	ShortDNForGroup     bool   `default:"false"`
 	NestedGroup         bool   `default:"false"`
@@ -246,8 +247,41 @@ func (lc *LDAPClient) Authenticate(username, password string) (bool, bool, map[s
 	return true, isAdmin, user, nil
 }
 
+// GetOUsOfUser returns the organizational unit for a user.
+func (lc *LDAPClient) GetOUsOfUser(userdn string) ([]string, error) {
+
+	logger.Debug("GetOUsOfUser: ", userdn)
+
+	dn, err := ldap.ParseDN(userdn)
+	if err != nil {
+		return nil, err
+	}
+
+	groups := []string{}
+
+	if len(dn.RDNs) == 0 {
+		return groups, nil
+	}
+
+	for _, rdn := range dn.RDNs {
+		for _, rdnTypeAndValue := range rdn.Attributes {
+			logger.Debug(fmt.Sprintf("Attribute: [%s] -> [%s]", rdnTypeAndValue.Type, rdnTypeAndValue.Value))
+			if strings.EqualFold(rdnTypeAndValue.Type, "OU") {
+				logger.Debug("Found OU: ", rdnTypeAndValue.Value)
+				groups = append(groups, rdnTypeAndValue.Value)
+			}
+		}
+	}
+
+	return groups, nil
+}
+
 // GetGroupsOfUser returns the group for a user.
 func (lc *LDAPClient) GetGroupsOfUser(username string) ([]string, error) {
+
+	if lc.OUAsGroup {
+		return lc.GetOUsOfUser(username)
+	}
 
 	parsedUsername := username
 

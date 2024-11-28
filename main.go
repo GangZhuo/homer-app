@@ -624,6 +624,10 @@ func configureServiceObjects() {
 			ldapClient.InsecureSkipVerify = true
 		}
 
+		if viper.IsSet("ldap_config.ou_as_group") {
+			ldapClient.OUAsGroup = viper.GetBool("ldap_config.ou_as_group")
+		}
+
 		if viper.IsSet("ldap_config.short_group") {
 			ldapClient.ShortGroup = viper.GetBool("ldap_config.short_group")
 		}
